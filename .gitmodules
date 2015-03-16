@@ -1,0 +1,6 @@
+[submodule "libs/editor"]
+	path = libs/editor
+	url = https://github.com/benjycook/behavior3editor.git
+[submodule "libs/b3js"]
+	path = libs/b3js
+	url = https://github.com/benjycook/behavior3js.git
