@@ -35,8 +35,33 @@ cr.behaviors.BehaviorTree = function(runtime)
 	
 	behtypeProto.onCreate = function()
 	{
-
-
+		
+		function nodeTick(tick) {
+			var target = tick.target;
+			var taskname = this.title;
+			target.taskName = taskname
+			console.log(target.inst.uid)
+			cr_getC2Runtime().trigger(cr.behaviors.BehaviorTree.prototype.cnds.onTask, target.inst);
+			var res = target.lastResponse;
+			//console.log("construct says",res);
+			if(res=="SUCCESS") {
+				console.log("returning SUCCESS",b3.SUCCESS);
+				return b3.SUCCESS;
+			} else if (res=="FAILURE") {
+				console.log("returning FAILURE",b3.FAILURE);
+				return b3.FAILURE;
+			}
+			console.log("returning RUNNING",b3.RUNNING);
+			return b3.RUNNING;
+				
+		}
+		
+		var C2Node = b3.Class(b3.Action);
+		C2Node.prototype.name = 'c2Node';
+		C2Node.prototype.tick = nodeTick;
+		b3.c2Node = C2Node;
+		
+		
 	};
 
 	/////////////////////////////////////
@@ -51,47 +76,22 @@ cr.behaviors.BehaviorTree = function(runtime)
 	
 	var behinstProto = behaviorProto.Instance.prototype;
 
+	
+	
+	
 	behinstProto.onCreate = function()
 	{
 		// Load properties
 		this.btname = this.properties[0];
+		this.lastResponse = "";
+		this.taskName = "";
+		this.blackboard = new b3.Blackboard();
 		
-		// object is sealed after this call, so make sure any properties you'll ever need are created, e.g.
-		// this.myValue = 0;
-			var that = this;
-			that.target = 0;
-			
-			var C2Node = b3.Class(b3.Action);
-
-			// Remember to set the name of the node. 
-			C2Node.prototype.name = 'c2Node';
-			C2Node.prototype.tick = function(tick) {
-				console.log("This is c2node, I just got ticked",this,tick)
-				var target = tick.target;
-				var taskname = this.title;
-				that.taskName = taskname
-				that.runtime.trigger(cr.behaviors.BehaviorTree.prototype.cnds.onTask, that.inst);
-				var res = that.lastResponse;
-				console.log("construct says",res);
-				if(res=="SUCCESS") {
-					console.log("returning SUCCESS",b3.SUCCESS);
-					return b3.SUCCESS;
-				} else if (res=="FAILURE") {
-					console.log("returning FAILURE",b3.FAILURE);
-					return b3.FAILURE;
-				}
-				console.log("returning RUNNING",b3.RUNNING);
-				return b3.RUNNING;
-			}
-			
-			b3.c2Node = C2Node;
-		
-			$.getJSON(this.btname+'.json',function(treedata){
-				that.tree = new b3.BehaviorTree();
-				that.tree.load(treedata);
-				that.blackboard = new b3.Blackboard();
-				
-			})
+		var that = this;
+		$.getJSON(this.btname+'.json',function(treedata){
+			that.tree = new b3.BehaviorTree();
+			that.tree.load(treedata);
+		})
 		
 	
 			
@@ -219,7 +219,7 @@ cr.behaviors.BehaviorTree = function(runtime)
 	
 	Acts.prototype.tickMe = function ()
 	{
-		this.tree.tick(this.target, this.blackboard);
+		this.tree.tick(this, this.blackboard);
 	};
 	
 	// ... other actions here ...
